@@ -80,11 +80,12 @@ if "chat_history" not in st.session_state:
 user_input = st.chat_input("Ask me anything...")
 
 if user_input:
+    # Add user message to history and display
     st.session_state.chat_history.append({"role": "user", "content": user_input})
-
     with st.chat_message("user"):
         st.markdown(f"<div class='chat-bubble user'>{user_input}</div>", unsafe_allow_html=True)
 
+    # Get and display assistant response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             try:
@@ -96,10 +97,7 @@ if user_input:
                 response.raise_for_status()
                 response_data = response.json()
                 
-                if "response" in response_data:
-                    assistant_reply = response_data["response"]
-                else:
-                    assistant_reply = "❌ Error from backend: " + str(response_data.get("error", "Unknown error"))
+                assistant_reply = response_data.get("response") or f"❌ Error: {response_data.get('error', 'Unknown error')}"
                     
             except requests.exceptions.RequestException as e:
                 assistant_reply = f"❌ Connection error: {str(e)}"
@@ -108,13 +106,13 @@ if user_input:
 
             st.markdown(f"<div class='chat-bubble assistant'>{assistant_reply}</div>", unsafe_allow_html=True)
 
-    st.session_state.chat_history.append({"role": "assistant", "content": assistant_reply})
-
 # --- DISPLAY CHAT HISTORY ---
-for msg in st.session_state.chat_history:
-    role_class = "user" if msg["role"] == "user" else "assistant"
-    with st.chat_message(msg["role"]):
-        st.markdown(f"<div class='chat-bubble {role_class}'>{msg['content']}</div>", unsafe_allow_html=True)
+with st.expander("Full Chat History"):
+    for msg in st.session_state.chat_history:
+        role_class = "user" if msg["role"] == "user" else "assistant"
+        st.markdown(f"<div class='chat-bubble {role_class}' style='opacity: 0.8;'>{msg['content']}</div>", 
+                   unsafe_allow_html=True)
+            
 
 # --- EXPORT CHAT TO PDF ---
 def export_chat_to_pdf(chat_history):
